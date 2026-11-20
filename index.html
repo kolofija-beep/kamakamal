@@ -117,4 +117,51 @@
     unlockSite();
   });
 </script>
+<div id="gate-overlay" style="position:fixed;inset:0;z-index:999999;background:#0f172a;display:flex;align-items:center;justify-content:center;padding:16px;font-family:sans-serif;">
+  <div style="width:100%;max-width:400px;background:#fff;color:#111;padding:24px;border-radius:14px;text-align:center;">
+    <h3 style="margin-bottom:8px;">تسجيل الدخول بالبريد الإلكتروني</h3>
+    <p style="margin-bottom:14px;font-size:14px;color:#555;">أدخل بريدك الإلكتروني للمتابعة</p>
+    <input id="g-email" type="email" placeholder="name@example.com" style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ccc;border-radius:8px;box-sizing:border-box;" />
+    <button id="g-btn" type="button" style="width:100%;padding:11px;border:0;border-radius:8px;background:#4f46e5;color:#fff;font-weight:bold;cursor:pointer;">دخول</button>
+    <p id="g-msg" style="margin-top:10px;font-size:13px;color:#dc2626;"></p>
+  </div>
+</div>
+<script>
+(function(){
+  if (localStorage.getItem("allowed_email")) {
+    var ov = document.getElementById("gate-overlay");
+    if (ov) ov.style.display = "none";
+  }
+  document.addEventListener("click", function(e){
+    if (!e.target || e.target.id !== "g-btn") return;
+    var inp = document.getElementById("g-email");
+    var msg = document.getElementById("g-msg");
+    var email = (inp && inp.value ? inp.value : "").trim().toLowerCase();
+    if (!email || email.indexOf("@") === -1) {
+      if (msg) msg.textContent = "يرجى إدخال بريد إلكتروني صحيح.";
+      return;
+    }
+    e.target.disabled = true;
+    if (msg) { msg.style.color = "#333"; msg.textContent = "جاري التسجيل..."; }
+    fetch("https://wkkxnbdokldnlqkggtia.supabase.co/rest/v1/visitors", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": "sb_publishable_ipyNMcj667BSf_mLd5YwVQ_IkS94Er0",
+        "Authorization": "Bearer sb_publishable_ipyNMcj667BSf_mLd5YwVQ_IkS94Er0",
+        "Prefer": "resolution=ignore-duplicates,return=minimal"
+      },
+      body: JSON.stringify({ email: email })
+    }).then(function(res){
+      if (!res.ok) return res.text().then(function(t){ throw new Error(t || ("HTTP " + res.status)); });
+      localStorage.setItem("allowed_email", email);
+      var ov = document.getElementById("gate-overlay");
+      if (ov) ov.style.display = "none";
+    }).catch(function(err){
+      e.target.disabled = false;
+      if (msg) { msg.style.color = "#dc2626"; msg.textContent = "خطأ: " + err.message; }
+    });
+  });
+})();
+</script>
 </body>
