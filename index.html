@@ -53,3 +53,68 @@
 })();
 </script>
 </body> </html>
+<div id="email-gate" style="max-width:420px;margin:40px auto;padding:24px;border:1px solid #ddd;border-radius:12px;font-family:sans-serif;text-align:center;background:#fff;">
+  <h3>تسجيل الدخول بالبريد الإلكتروني</h3>
+  <p>أدخل بريدك الإلكتروني للمتابعة إلى المنصة</p>
+  <input id="gate-email" type="email" placeholder="name@example.com" required style="width:100%;padding:10px;margin:10px 0;border:1px solid #ccc;border-radius:8px;" />
+  <button id="gate-btn" type="button" style="width:100%;padding:10px;border:none;border-radius:8px;background:#111;color:#fff;cursor:pointer;">دخول</button>
+  <p id="gate-msg" style="margin-top:10px;font-size:14px;"></p>
+</div>
+
+<script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+  const supabase = createClient(
+    "https://wkkxnbdokldnlqkggtia.supabase.co",
+    "sb_publishable_ipyNMcj667BSf_mLd5YwVQ_IkS94Er0"
+  );
+
+  const gateBox = document.getElementById("email-gate");
+  const emailInput = document.getElementById("gate-email");
+  const gateBtn = document.getElementById("gate-btn");
+  const gateMsg = document.getElementById("gate-msg");
+
+  function unlockSite() {
+    gateBox.style.display = "none";
+    document.querySelectorAll("[data-protected]").forEach((el) => {
+      el.style.display = "";
+    });
+  }
+
+  function lockSite() {
+    document.querySelectorAll("[data-protected]").forEach((el) => {
+      el.style.display = "none";
+    });
+  }
+
+  lockSite();
+
+  if (localStorage.getItem("allowed_email")) {
+    unlockSite();
+  }
+
+  gateBtn.addEventListener("click", async () => {
+    const email = emailInput.value.trim().toLowerCase();
+    if (!email || !email.includes("@")) {
+      gateMsg.textContent = "يرجى إدخال بريد إلكتروني صحيح.";
+      return;
+    }
+
+    gateBtn.disabled = true;
+    gateMsg.textContent = "جاري التسجيل والتحقق...";
+
+    const { error } = await supabase
+      .from("visitors")
+      .insert([{ email }]);
+
+    if (error && error.code !== "23505") {
+      gateMsg.textContent = "حدث خطأ: " + error.message;
+      gateBtn.disabled = false;
+      return;
+    }
+
+    localStorage.setItem("allowed_email", email);
+    unlockSite();
+  });
+</script>
+</body>
